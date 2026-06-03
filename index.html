@@ -17,7 +17,7 @@
 
   <style>
     :root {
-      --bg: #0d0d0d; --surface: #161616; --border: #2a2a2a;
+      --bg: #ffffff; --surface: #161616; --border: #2a2a2a;
       --text: #f0ede8; --muted: #6b6b6b; --accent: #c8f542;
       --font-display: 'Bebas Neue', sans-serif;
       --font-body: 'DM Sans', sans-serif;
@@ -344,7 +344,7 @@ function showView(id) {
 
 // THREE.JS
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x0d0d0d);
+scene.background = new THREE.Color(0xffffff);
 const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
 camera.position.set(2, 2, 4);
 const renderer = new THREE.WebGLRenderer({ antialias: true });
