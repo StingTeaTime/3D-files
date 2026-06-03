@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OneTent — Ultralight Camping Tent</title>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg: #0d0d0d; --surface: #161616; --border: #2a2a2a;
+      --text: #f0ede8; --muted: #6b6b6b; --accent: #c8f542;
+      --font-display: 'Bebas Neue', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { height: 100%; }
+    body { background: var(--bg); color: var(--text); font-family: var(--font-body); overflow: hidden; height: 100vh; }
+
+    .view { display: none; width: 100%; height: 100vh; }
+    .view.active { display: flex; }
+
+    .top-bar {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 30;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 24px;
+      background: linear-gradient(to bottom, rgba(13,13,13,0.97), transparent);
+    }
+    .logo { font-family: var(--font-display); font-size: 24px; color: var(--accent); letter-spacing: 0.1em; }
+    .back-btn {
+      font-size: 13px; color: var(--muted); background: none; border: none;
+      cursor: pointer; font-family: var(--font-body); padding: 0;
+    }
+    .back-btn:hover { color: var(--text); }
+
+    #loader {
+      position: fixed; inset: 0; background: var(--bg);
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      z-index: 200; transition: opacity 0.5s;
+    }
+    #loader .l-logo { font-family: var(--font-display); font-size: 52px; color: var(--accent); letter-spacing: 0.1em; margin-bottom: 28px; }
+    #loader .bar-wrap { width: 200px; height: 2px; background: var(--border); border-radius: 2px; overflow: hidden; }
+    #loader .bar { height: 100%; width: 0%; background: var(--accent); transition: width 0.3s; }
+    #loader .l-text { margin-top: 14px; font-size: 11px; color: var(--muted); letter-spacing: 0.18em; text-transform: uppercase; }
+
+    /* VIEW 1 - CONFIGURATOR */
+    #view-config { position: relative; flex-direction: row; }
+    #canvas-wrap { flex: 1; height: 100vh; }
+    #canvas-wrap canvas { display: block; }
+
+    #panel {
+      position: absolute; top: 50%; right: 24px; transform: translateY(-50%);
+      width: 250px; z-index: 20;
+      background: rgba(22,22,22,0.93);
+      border: 1px solid var(--border); border-radius: 16px;
+      padding: 22px; backdrop-filter: blur(14px);
+    }
+    #panel .p-name { font-family: var(--font-display); font-size: 26px; letter-spacing: 0.04em; line-height: 1; }
+    #panel .p-sub { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.14em; margin: 4px 0 16px; }
+    #panel .p-price { font-family: var(--font-display); font-size: 34px; color: var(--accent); margin-bottom: 18px; }
+    .sec-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--muted); margin-bottom: 10px; }
+
+    .color-options { display: flex; flex-direction: column; gap: 7px; margin-bottom: 20px; }
+    .color-opt {
+      display: flex; align-items: center; gap: 10px;
+      padding: 9px 13px; border-radius: 9px;
+      border: 1px solid var(--border); background: transparent;
+      color: var(--text); cursor: pointer;
+      font-family: var(--font-body); font-size: 13px;
+      transition: all 0.18s; text-align: left; width: 100%;
+    }
+    .color-opt:hover { border-color: #444; background: rgba(255,255,255,0.04); }
+    .color-opt.active { border-color: var(--accent); background: rgba(200,245,66,0.07); }
+    .color-opt .dot { width: 18px; height: 18px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.12); flex-shrink: 0; }
+    .color-opt .check { margin-left: auto; font-size: 13px; color: var(--accent); opacity: 0; transition: opacity 0.18s; }
+    .color-opt.active .check { opacity: 1; }
+
+    #btn-add-cart {
+      width: 100%; padding: 13px;
+      background: var(--accent); color: #0d0d0d;
+      border: none; border-radius: 10px;
+      font-family: var(--font-display); font-size: 19px; letter-spacing: 0.08em;
+      cursor: pointer; transition: opacity 0.2s;
+    }
+    #btn-add-cart:hover { opacity: 0.87; }
+    #btn-add-cart:disabled { opacity: 0.3; cursor: not-allowed; }
+    #cfg-status { margin-top: 10px; font-size: 11px; color: var(--muted); text-align: center; }
+
+    /* VIEW 2 - CART */
+    #view-cart { flex-direction: column; overflow-y: auto; background: var(--bg); }
+    .scroll-page { max-width: 520px; margin: 0 auto; padding: 90px 24px 60px; width: 100%; }
+    .page-title { font-family: var(--font-display); font-size: 40px; letter-spacing: 0.05em; margin-bottom: 28px; }
+
+    .cart-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 14px; padding: 20px;
+      display: flex; align-items: center; gap: 16px; margin-bottom: 16px;
+    }
+    .cart-item .c-dot { width: 44px; height: 44px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+    .cart-item .c-info { flex: 1; }
+    .cart-item .c-name { font-family: var(--font-display); font-size: 20px; letter-spacing: 0.04em; }
+    .cart-item .c-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .cart-item .c-price { font-family: var(--font-display); font-size: 24px; color: var(--accent); }
+    .qty-row { display: flex; align-items: center; gap: 10px; margin-top: 10px; }
+    .qty-label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.12em; }
+    .qty-ctrl { display: flex; align-items: center; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+    .qty-ctrl button { width: 34px; height: 34px; background: transparent; color: var(--text); border: none; font-size: 17px; cursor: pointer; }
+    .qty-ctrl button:hover { background: rgba(255,255,255,0.08); }
+    .qty-ctrl span { width: 34px; text-align: center; font-size: 14px; }
+
+    .summary-box { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+    .sum-row { display: flex; justify-content: space-between; padding: 8px 0; font-size: 14px; }
+    .sum-row span:first-child { color: var(--muted); }
+    .sum-row.total { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 14px; }
+    .sum-row.total span:first-child { font-family: var(--font-display); font-size: 18px; letter-spacing: 0.05em; color: var(--text); }
+    .sum-row.total span:last-child { font-family: var(--font-display); font-size: 24px; color: var(--accent); }
+
+    .btn-primary {
+      display: block; width: 100%; padding: 15px;
+      background: var(--accent); color: #0d0d0d;
+      border: none; border-radius: 12px;
+      font-family: var(--font-display); font-size: 20px; letter-spacing: 0.08em;
+      cursor: pointer; transition: opacity 0.2s; text-align: center;
+    }
+    .btn-primary:hover { opacity: 0.87; }
+    .btn-primary:disabled { opacity: 0.35; cursor: not-allowed; }
+
+    /* VIEW 3 - CHECKOUT */
+    #view-checkout { flex-direction: column; overflow-y: auto; background: var(--bg); }
+    .order-mini {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 12px; padding: 16px 20px; margin-bottom: 24px;
+      display: flex; align-items: center; gap: 14px;
+    }
+    .order-mini .m-dot { width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255,255,255,0.1); flex-shrink: 0; }
+    .order-mini .m-info { flex: 1; font-size: 13px; color: var(--muted); }
+    .order-mini .m-info strong { display: block; color: var(--text); font-family: var(--font-display); font-size: 17px; letter-spacing: 0.04em; }
+    .order-mini .m-price { font-family: var(--font-display); font-size: 20px; color: var(--accent); }
+    .sec-title { font-size: 11px; text-transform: uppercase; letter-spacing: 0.2em; color: var(--muted); margin: 22px 0 12px; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 11px; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.1em; }
+    .field input, .field select, .field textarea {
+      width: 100%; padding: 12px 15px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 9px; color: var(--text);
+      font-family: var(--font-body); font-size: 14px; outline: none;
+      transition: border-color 0.2s; -webkit-appearance: none;
+    }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: var(--accent); }
+    .field select option { background: #1a1a1a; }
+    .field textarea { resize: vertical; min-height: 70px; }
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .form-note { font-size: 12px; color: var(--muted); text-align: center; margin-top: 12px; line-height: 1.6; }
+
+    /* VIEW 4 - SUCCESS */
+    #view-success { flex-direction: column; overflow-y: auto; background: var(--bg); }
+    .check-circle {
+      width: 68px; height: 68px; border-radius: 50%;
+      background: rgba(200,245,66,0.1); border: 2px solid var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 30px; margin-bottom: 24px;
+      animation: pop 0.4s ease;
+    }
+    @keyframes pop { from { transform: scale(0.5); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .success-title { font-family: var(--font-display); font-size: 44px; letter-spacing: 0.05em; margin-bottom: 10px; line-height: 1; }
+    .success-sub { font-size: 14px; color: var(--muted); margin-bottom: 36px; line-height: 1.6; }
+    .bank-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 24px; margin-bottom: 20px; }
+    .bank-card-title { font-family: var(--font-display); font-size: 18px; color: var(--accent); letter-spacing: 0.06em; margin-bottom: 18px; }
+    .bank-row { display: flex; justify-content: space-between; align-items: center; padding: 11px 0; border-bottom: 1px solid var(--border); }
+    .bank-row:last-child { border-bottom: none; }
+    .bank-row .bl { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    .bank-row .bv { font-size: 14px; color: var(--text); font-weight: 500; }
+    .bank-row .bv.hi { font-family: var(--font-display); font-size: 22px; color: var(--accent); }
+    .info-box {
+      background: rgba(200,245,66,0.05); border: 1px solid rgba(200,245,66,0.18);
+      border-radius: 12px; padding: 16px 18px; margin-bottom: 28px;
+      font-size: 13px; color: var(--muted); line-height: 1.8;
+    }
+    .info-box strong { color: var(--text); }
+    .btn-outline {
+      display: inline-block; padding: 12px 28px;
+      border: 1px solid var(--border); border-radius: 10px;
+      color: var(--text); font-size: 14px; cursor: pointer;
+      background: none; font-family: var(--font-body);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+  </style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="l-logo">ONETENT</div>
+  <div class="bar-wrap"><div class="bar" id="load-bar"></div></div>
+  <div class="l-text" id="loader-text">Loading model...</div>
+</div>
+
+<!-- VIEW 1: CONFIGURATOR -->
+<div id="view-config" class="view active">
+  <div class="top-bar">
+    <div class="logo">ONETENT</div>
+    <span style="font-size:12px;color:var(--muted);letter-spacing:0.12em;text-transform:uppercase;">Ultralight · Alpine</span>
+  </div>
+  <div id="canvas-wrap"></div>
+  <div id="panel">
+    <div class="p-name">ULTRALIGHT<br>TENT</div>
+    <div class="p-sub">Single wall · 580g · 3-season</div>
+    <div class="p-price">CHF 450</div>
+    <div class="sec-label">Choose your color</div>
+    <div class="color-options">
+      <button class="color-opt active" data-color="#1a1a1a" data-name="Stealth Black">
+        <span class="dot" style="background:#1a1a1a"></span>Stealth Black<span class="check">✓</span>
+      </button>
+      <button class="color-opt" data-color="#CC2200" data-name="Alpine Red">
+        <span class="dot" style="background:#CC2200"></span>Alpine Red<span class="check">✓</span>
+      </button>
+      <button class="color-opt" data-color="#E8A020" data-name="Summit Orange">
+        <span class="dot" style="background:#E8A020"></span>Summit Orange<span class="check">✓</span>
+      </button>
+      <button class="color-opt" data-color="#228B22" data-name="Forest Green">
+        <span class="dot" style="background:#228B22"></span>Forest Green<span class="check">✓</span>
+      </button>
+      <button class="color-opt" data-color="#4169E1" data-name="Glacier Blue">
+        <span class="dot" style="background:#4169E1"></span>Glacier Blue<span class="check">✓</span>
+      </button>
+    </div>
+    <button id="btn-add-cart" disabled>ADD TO CART</button>
+    <div id="cfg-status">Loading 3D model...</div>
+  </div>
+</div>
+
+<!-- VIEW 2: CART -->
+<div id="view-cart" class="view">
+  <div class="top-bar">
+    <div class="logo">ONETENT</div>
+    <button class="back-btn" id="back-to-config">← Back</button>
+  </div>
+  <div class="scroll-page">
+    <div class="page-title">YOUR CART</div>
+    <div id="cart-item-wrap"></div>
+    <div class="summary-box" id="cart-summary"></div>
+    <button class="btn-primary" id="btn-to-checkout">PROCEED TO CHECKOUT</button>
+  </div>
+</div>
+
+<!-- VIEW 3: CHECKOUT -->
+<div id="view-checkout" class="view">
+  <div class="top-bar">
+    <div class="logo">ONETENT</div>
+    <button class="back-btn" id="back-to-cart">← Back to cart</button>
+  </div>
+  <div class="scroll-page">
+    <div class="page-title">CHECKOUT</div>
+    <div class="order-mini" id="checkout-mini"></div>
+    <form id="checkout-form" action="https://formspree.io/f/xjgdbjwp" method="POST">
+      <input type="hidden" name="Product" value="OneTent Ultralight Tent">
+      <input type="hidden" name="Color" id="f-color">
+      <input type="hidden" name="Quantity" id="f-qty">
+      <input type="hidden" name="Total" id="f-total">
+      <div class="sec-title">Contact</div>
+      <div class="field"><label>Full Name *</label><input type="text" name="Name" required placeholder="Jane Smith"></div>
+      <div class="field"><label>Email *</label><input type="email" name="Email" required placeholder="jane@example.com"></div>
+      <div class="field"><label>Phone</label><input type="tel" name="Phone" placeholder="+41 79 000 00 00"></div>
+      <div class="sec-title">Shipping Address</div>
+      <div class="field"><label>Street Address *</label><input type="text" name="Address" required placeholder="123 Mountain Road"></div>
+      <div class="row-2">
+        <div class="field"><label>City *</label><input type="text" name="City" required placeholder="Zurich"></div>
+        <div class="field"><label>Postal Code *</label><input type="text" name="Postal" required placeholder="8001"></div>
+      </div>
+      <div class="field">
+        <label>Country *</label>
+        <select name="Country" required>
+          <option value="">Select country</option>
+          <option>Switzerland</option><option>France</option>
+          <option>Germany</option><option>Austria</option>
+          <option>Italy</option><option>Other</option>
+        </select>
+      </div>
+      <div class="sec-title">Notes</div>
+      <div class="field"><label>Order Notes (optional)</label><textarea name="Notes" placeholder="Any special requests..."></textarea></div>
+      <button type="submit" class="btn-primary" id="submit-btn" style="margin-top:20px;">PLACE ORDER</button>
+      <p class="form-note">Bank transfer details shown after order.<br>Order confirmed once payment received.</p>
+    </form>
+  </div>
+</div>
+
+<!-- VIEW 4: SUCCESS -->
+<div id="view-success" class="view">
+  <div class="top-bar">
+    <div class="logo">ONETENT</div>
+  </div>
+  <div class="scroll-page">
+    <div class="check-circle">✓</div>
+    <div class="success-title">ORDER<br>CONFIRMED</div>
+    <p class="success-sub">Thank you! Your order has been received.<br>Please complete your bank transfer below.</p>
+    <div class="bank-card">
+      <div class="bank-card-title">BANK TRANSFER DETAILS</div>
+      <div class="bank-row"><span class="bl">Account Holder</span><span class="bv">Eric</span></div>
+      <div class="bank-row"><span class="bl">Bank</span><span class="bv">UBS</span></div>
+      <div class="bank-row"><span class="bl">IBAN</span><span class="bv">123</span></div>
+      <div class="bank-row" id="success-amount"><span class="bl">Amount</span><span class="bv hi">CHF 450</span></div>
+      <div class="bank-row"><span class="bl">Reference</span><span class="bv">Your name + ONETENT</span></div>
+    </div>
+    <div class="info-box">
+      <strong>What happens next?</strong><br>
+      1. Transfer the amount using your name as reference.<br>
+      2. We confirm your payment within 1 business day.<br>
+      3. Your tent ships within 3–5 business days.<br>
+      4. You'll receive a tracking number by email.
+    </div>
+    <button class="btn-outline" id="btn-restart">← Configure another tent</button>
+  </div>
+</div>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+const state = { color: '#1a1a1a', colorName: 'Stealth Black', qty: 1, price: 450, currency: 'CHF' };
+const colorMap = {
+  'Stealth Black': '#1a1a1a', 'Alpine Red': '#CC2200',
+  'Summit Orange': '#E8A020', 'Forest Green': '#228B22', 'Glacier Blue': '#4169E1'
+};
+
+function showView(id) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if (id === 'view-config') {
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+  }
+}
+
+// THREE.JS
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d0d0d);
+const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+camera.position.set(2, 2, 4);
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setPixelRatio(window.devicePixelRatio);
+renderer.setSize(window.innerWidth, window.innerHeight);
+renderer.shadowMap.enabled = true;
+document.getElementById('canvas-wrap').appendChild(renderer.domElement);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.05;
+controls.minDistance = 1.5;
+controls.maxDistance = 10;
+scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+const sun = new THREE.DirectionalLight(0xffffff, 3);
+sun.position.set(5, 10, 5);
+sun.castShadow = true;
+scene.add(sun);
+scene.add(new THREE.HemisphereLight(0x8888ff, 0x334422, 0.6));
+const rim = new THREE.DirectionalLight(0xc8f542, 0.8);
+rim.position.set(-5, 2, -5);
+scene.add(rim);
+
+let tentFlyMeshes = [];
+
+const loader = new GLTFLoader();
+loader.load('./TentJs.glb',
+  (gltf) => {
+    scene.add(gltf.scene);
+    console.log('--- GLB Objects ---');
+    gltf.scene.traverse((child) => {
+      console.log(child.type + ' : ' + child.name);
+      if (child.name === 'TentFly') {
+        if (child.isMesh) tentFlyMeshes.push(child);
+        else child.traverse(c => { if (c.isMesh) tentFlyMeshes.push(c); });
+      }
+    });
+    applyColor(state.color);
+    document.getElementById('loader').style.opacity = '0';
+    setTimeout(() => document.getElementById('loader').style.display = 'none', 600);
+    if (tentFlyMeshes.length > 0) {
+      document.getElementById('btn-add-cart').disabled = false;
+      document.getElementById('cfg-status').textContent = 'Drag to rotate · Scroll to zoom';
+    } else {
+      document.getElementById('cfg-status').textContent = 'TentFly not found — check console';
+    }
+  },
+  (xhr) => {
+    if (xhr.total) {
+      const p = Math.round(xhr.loaded / xhr.total * 100);
+      document.getElementById('load-bar').style.width = p + '%';
+      document.getElementById('loader-text').textContent = 'Loading model... ' + p + '%';
+    }
+  },
+  (err) => {
+    document.getElementById('cfg-status').textContent = 'Failed to load model';
+    console.error(err);
+  }
+);
+
+function applyColor(hex) {
+  tentFlyMeshes.forEach(mesh => {
+    if (!mesh.userData.cloned) { mesh.material = mesh.material.clone(); mesh.userData.cloned = true; }
+    mesh.material.color.set(hex);
+  });
+}
+
+(function animate() { requestAnimationFrame(animate); controls.update(); renderer.render(scene, camera); })();
+
+window.addEventListener('resize', () => {
+  if (document.getElementById('view-config').classList.contains('active')) {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+  }
+});
+
+// Color buttons
+document.querySelectorAll('.color-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.color-opt').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.color = btn.dataset.color;
+    state.colorName = btn.dataset.name;
+    applyColor(state.color);
+  });
+});
+
+// Add to cart
+document.getElementById('btn-add-cart').addEventListener('click', () => {
+  renderCart(); showView('view-cart');
+});
+
+// CART
+function renderCart() {
+  const total = state.price * state.qty;
+  document.getElementById('cart-item-wrap').innerHTML = `
+    <div class="cart-item">
+      <div class="c-dot" style="background:${colorMap[state.colorName]}"></div>
+      <div class="c-info">
+        <div class="c-name">ULTRALIGHT TENT</div>
+        <div class="c-sub">${state.colorName} · Single wall · 580g</div>
+        <div class="qty-row">
+          <span class="qty-label">Qty</span>
+          <div class="qty-ctrl">
+            <button id="q-minus">−</button>
+            <span id="q-num">${state.qty}</span>
+            <button id="q-plus">+</button>
+          </div>
+        </div>
+      </div>
+      <div class="c-price">${state.currency} ${state.price}</div>
+    </div>`;
+  document.getElementById('cart-summary').innerHTML = `
+    <div class="sum-row"><span>Subtotal</span><span>${state.currency} ${total}</span></div>
+    <div class="sum-row"><span>Shipping</span><span>Calculated at checkout</span></div>
+    <div class="sum-row total"><span>TOTAL</span><span>${state.currency} ${total}</span></div>`;
+  document.getElementById('q-minus').addEventListener('click', () => { if (state.qty > 1) { state.qty--; renderCart(); } });
+  document.getElementById('q-plus').addEventListener('click', () => { state.qty++; renderCart(); });
+}
+
+document.getElementById('back-to-config').addEventListener('click', () => showView('view-config'));
+document.getElementById('btn-to-checkout').addEventListener('click', () => { renderCheckoutMini(); showView('view-checkout'); });
+
+// CHECKOUT
+function renderCheckoutMini() {
+  const total = state.price * state.qty;
+  document.getElementById('checkout-mini').innerHTML = `
+    <div class="m-dot" style="background:${colorMap[state.colorName]}"></div>
+    <div class="m-info"><strong>ULTRALIGHT TENT</strong>${state.colorName} · Qty: ${state.qty}</div>
+    <div class="m-price">${state.currency} ${total}</div>`;
+  document.getElementById('f-color').value = state.colorName;
+  document.getElementById('f-qty').value = state.qty;
+  document.getElementById('f-total').value = state.currency + ' ' + total;
+}
+
+document.getElementById('back-to-cart').addEventListener('click', () => showView('view-cart'));
+
+document.getElementById('checkout-form').addEventListener('submit', function(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  btn.disabled = true;
+  btn.textContent = 'SENDING...';
+  fetch(this.action, {
+    method: 'POST',
+    body: new FormData(this),
+    headers: { 'Accept': 'application/json' }
+  }).then(res => {
+    if (res.ok) {
+      const total = state.price * state.qty;
+      document.getElementById('success-amount').innerHTML =
+        `<span class="bl">Amount</span><span class="bv hi">${state.currency} ${total}</span>`;
+      showView('view-success');
+    } else {
+      btn.disabled = false; btn.textContent = 'PLACE ORDER';
+      alert('Something went wrong. Please try again.');
+    }
+  }).catch(() => {
+    btn.disabled = false; btn.textContent = 'PLACE ORDER';
+    alert('Network error. Please try again.');
+  });
+});
+
+// SUCCESS
+document.getElementById('btn-restart').addEventListener('click', () => { state.qty = 1; showView('view-config'); });
+</script>
+</body>
+</html>
