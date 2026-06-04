@@ -87,7 +87,7 @@ scene.add(sun);
 scene.add(new THREE.HemisphereLight(0x8888ff, 0x334422, 0.8));
 
 // --- Load GLB ---
-let tentFlyMeshes = [];
+let CordMeshes = [];
 
 status.textContent = 'Loading GLB...';
 
@@ -102,21 +102,21 @@ loader.load(
     gltf.scene.traverse((child) => {
       console.log(child.type + ' : ' + child.name);
 
-      if (child.name === 'TentFly') {
+      if (child.name === 'Cord') {
         if (child.isMesh) {
-          tentFlyMeshes.push(child);
+          CordMeshes.push(child);
         } else {
           child.traverse((c) => {
-            if (c.isMesh) tentFlyMeshes.push(c);
+            if (c.isMesh) CordMeshes.push(c);
           });
         }
       }
     });
 
-    if (tentFlyMeshes.length > 0) {
+    if (CordMeshes.length > 0) {
       status.textContent = 'Ready ✓ — pick a color!';
     } else {
-      status.textContent = '⚠ TentFly not found — check console';
+      status.textContent = '⚠ Cord not found — check console';
     }
   },
   (xhr) => {
@@ -136,7 +136,7 @@ document.querySelectorAll('.color-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
     document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
-    tentFlyMeshes.forEach((mesh) => {
+    CordMeshes.forEach((mesh) => {
       if (!mesh.userData.cloned) {
         mesh.material = mesh.material.clone();
         mesh.userData.cloned = true;
