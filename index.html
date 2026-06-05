@@ -44,17 +44,21 @@
 <body>
 
 <div id="ui">
-  <h3>Tent Fly Color</h3>
+  <h3>Cord Color</h3>
   <button class="color-btn" data-color="#228B22"><span class="swatch" style="background:#228B22"></span>Forest Green</button>
   <button class="color-btn" data-color="#4169E1"><span class="swatch" style="background:#4169E1"></span>Royal Blue</button>
   <button class="color-btn" data-color="#CC2200"><span class="swatch" style="background:#CC2200"></span>Red</button>
   <button class="color-btn" data-color="#E8A020"><span class="swatch" style="background:#E8A020"></span>Orange</button>
   <button class="color-btn" data-color="#111111"><span class="swatch" style="background:#333333"></span>Black</button>
+
+  <h3>Cord Color</h3>
   <button class="color-btn" data-color="#7F00FF"><span class="swatch" style="background:#7F00FF"></span>Violet</button>
+  <button class="color-btn" data-color="#111111"><span class="swatch" style="background:#333333"></span>Black</button>
+  
   <div id="status">Initializing...</div>
 </div>
 
-<div id="version">v4</div>
+<div id="version">v5</div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -89,6 +93,7 @@ scene.add(new THREE.HemisphereLight(0x8888ff, 0x334422, 0.8));
 
 // --- Load GLB ---
 let CordMeshes = [];
+let BotbagMeshes = [];
 
 status.textContent = 'Loading GLB...';
 
@@ -118,6 +123,36 @@ loader.load(
       status.textContent = 'Ready ✓ — pick a color!';
     } else {
       status.textContent = '⚠ Cord not found — check console';
+    }
+  },
+  (xhr) => {
+    if (xhr.total) {
+      const pct = Math.round((xhr.loaded / xhr.total) * 100);
+      status.textContent = 'Loading GLB: ' + pct + '%';
+    }
+  },
+  (err) => {
+    status.textContent = '✗ GLB error — check console';
+    console.error('GLB load error:', err);
+  }
+);
+
+
+   if (child.name === 'Botbag') {
+        if (child.isMesh) {
+          Botbag.push(child);
+        } else {
+          child.traverse((c) => {
+            if (c.isMesh) Botbag.push(c);
+          });
+        }
+      }
+    });
+
+    if (BotbagMeshes.length > 0) {
+      status.textContent = 'Ready ✓ — pick a color!';
+    } else {
+      status.textContent = '⚠ Botbag not found — check console';
     }
   },
   (xhr) => {
