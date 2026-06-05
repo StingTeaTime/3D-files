@@ -105,55 +105,24 @@ loader.load(
 
     // Log all object names so we can debug
     console.log('--- All objects in GLB ---');
-    gltf.scene.traverse((child) => {
+ gltf.scene.traverse((child) => {
       console.log(child.type + ' : ' + child.name);
 
       if (child.name === 'Cord') {
-        if (child.isMesh) {
-          CordMeshes.push(child);
-        } else {
-          child.traverse((c) => {
-            if (c.isMesh) CordMeshes.push(c);
-          });
-        }
+        if (child.isMesh) CordMeshes.push(child);
+        else child.traverse(c => { if (c.isMesh) CordMeshes.push(c); });
+      }
+
+      if (child.name === 'Botbag') {
+        if (child.isMesh) BotbagMeshes.push(child);
+        else child.traverse(c => { if (c.isMesh) BotbagMeshes.push(c); });
       }
     });
 
-    if (CordMeshes.length > 0) {
-      status.textContent = 'Ready ✓ — pick a color!';
-    } else {
-      status.textContent = '⚠ Cord not found — check console';
-    }
-  },
-  (xhr) => {
-    if (xhr.total) {
-      const pct = Math.round((xhr.loaded / xhr.total) * 100);
-      status.textContent = 'Loading GLB: ' + pct + '%';
-    }
-  },
-  (err) => {
-    status.textContent = '✗ GLB error — check console';
-    console.error('GLB load error:', err);
-  }
-);
+    if (CordMeshes.length > 0) status.textContent = 'Ready ✓ — pick a color!';
+    else status.textContent = '⚠ Cord not found — check console';
 
-
-   if (child.name === 'Botbag') {
-        if (child.isMesh) {
-          Botbagmeshes.push(child);
-        } else {
-          child.traverse((c) => {
-            if (c.isMesh) Botbagmeshes.push(c);
-          });
-        }
-      }
-    });
-
-    if (BotbagMeshes.length > 0) {
-      status.textContent = 'Ready ✓ — pick a color!';
-    } else {
-      status.textContent = '⚠ Botbag not found — check console';
-    }
+    if (BotbagMeshes.length > 0) console.log('Botbag ready');
   },
   (xhr) => {
     if (xhr.total) {
