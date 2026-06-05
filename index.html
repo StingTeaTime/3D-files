@@ -160,7 +160,8 @@ document.querySelectorAll('.color-btn').forEach((btn) => {
       }
       mesh.material.color.set(btn.dataset.color);
     });
-
+document.querySelectorAll('.color-btn2').forEach((btn) => {
+  btn.addEventListener('click', () => {
     document.querySelectorAll('.color-btn2').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     BotbagMeshes.forEach((mesh) => {
