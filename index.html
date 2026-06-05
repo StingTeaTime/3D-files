@@ -69,7 +69,7 @@
   <div id="status">Initializing...</div>
 </div>
 
-<div id="version">v8</div>
+<div id="version">v9</div>   //version
 
 <script type="module">
 import * as THREE from 'three';
@@ -150,27 +150,39 @@ loader.load(
 // --- Color buttons ---
 document.querySelectorAll('.color-btn').forEach((btn) => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('.color-btn').forEach(b => b.classList.remove('active'));
+
+    document.querySelectorAll('.color-btn')
+      .forEach(b => b.classList.remove('active'));
+
     btn.classList.add('active');
-    
+
     CordMeshes.forEach((mesh) => {
       if (!mesh.userData.cloned) {
         mesh.material = mesh.material.clone();
         mesh.userData.cloned = true;
       }
+
       mesh.material.color.set(btn.dataset.color);
     });
-document.querySelectorAll('.color-btn2').forEach((btn) => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.color-btn2').forEach(b => b.classList.remove('active'));
-    btn.classList.add('active');
-    BotbagMeshes.forEach((mesh) => {
-  if (!mesh.userData.cloned) {
-    mesh.material = mesh.material.clone();
-    mesh.userData.cloned = true;
-  }
-  mesh.material.color.set(btn.dataset.color);
+  });
 });
+
+  document.querySelectorAll('.color-btn2').forEach((btn) => {
+  btn.addEventListener('click', () => {
+
+    document.querySelectorAll('.color-btn2')
+      .forEach(b => b.classList.remove('active'));
+
+    btn.classList.add('active');
+
+    BotbagMeshes.forEach((mesh) => {
+      if (!mesh.userData.cloned) {
+        mesh.material = mesh.material.clone();
+        mesh.userData.cloned = true;
+      }
+
+      mesh.material.color.set(btn.dataset.color);
+    });
   });
 });
 
