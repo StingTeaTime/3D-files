@@ -58,7 +58,7 @@
   <div id="status">Initializing...</div>
 </div>
 
-<div id="version">v5</div>
+<div id="version">v6</div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -140,10 +140,10 @@ loader.load(
 
    if (child.name === 'Botbag') {
         if (child.isMesh) {
-          Botbag.push(child);
+          Botbagmeshes.push(child);
         } else {
           child.traverse((c) => {
-            if (c.isMesh) Botbag.push(c);
+            if (c.isMesh) Botbagmeshes.push(c);
           });
         }
       }
