@@ -52,13 +52,13 @@
   <button class="color-btn" data-color="#111111"><span class="swatch" style="background:#333333"></span>Black</button>
 
   <h3>bottom Color</h3>
-  <button class="color-btn" data-color="#7F00FF"><span class="swatch" style="background:#7F00FF"></span>Violet</button>
-  <button class="color-btn" data-color="#111111"><span class="swatch" style="background:#333333"></span>Black</button>
+  <button class="color-btn2" data-color="#7F00FF"><span class="swatch" style="background:#7F00FF"></span>Violet</button>
+  <button class="color-btn2" data-color="#111111"><span class="swatch" style="background:#333333"></span>Black</button>
   
   <div id="status">Initializing...</div>
 </div>
 
-<div id="version">v7</div>
+<div id="version">v8</div>
 
 <script type="module">
 import * as THREE from 'three';
@@ -149,7 +149,9 @@ document.querySelectorAll('.color-btn').forEach((btn) => {
       }
       mesh.material.color.set(btn.dataset.color);
     });
-    
+
+    document.querySelectorAll('.color-btn2').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
     BotbagMeshes.forEach((mesh) => {
   if (!mesh.userData.cloned) {
     mesh.material = mesh.material.clone();
