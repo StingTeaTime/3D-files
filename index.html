@@ -104,7 +104,7 @@ scene.add(new THREE.HemisphereLight(0x8888ff, 0x334422, 0.8));
 
 // --- Load GLB ---
 let CordMeshes = [];
-let BotbagMeshes = [];
+let webingtopMeshes = [];
 
 status.textContent = 'Loading GLB...';
 
@@ -124,16 +124,16 @@ loader.load(
         else child.traverse(c => { if (c.isMesh) CordMeshes.push(c); });
       }
 
-      if (child.name === 'Botbag') {
-        if (child.isMesh) BotbagMeshes.push(child);
-        else child.traverse(c => { if (c.isMesh) BotbagMeshes.push(c); });
+      if (child.name === 'webingtop') {
+        if (child.isMesh) webingtopMeshes.push(child);
+        else child.traverse(c => { if (c.isMesh) webingtopMeshes.push(c); });
       }
     });
 
     if (CordMeshes.length > 0) status.textContent = 'Ready ✓ — pick a color!';
     else status.textContent = '⚠ Cord not found — check console';
 
-    if (BotbagMeshes.length > 0) console.log('Botbag ready');
+    if (webingtopMeshes.length > 0) console.log('webingtop ready');
   },
   (xhr) => {
     if (xhr.total) {
@@ -175,7 +175,7 @@ document.querySelectorAll('.color-btn').forEach((btn) => {
 
     btn.classList.add('active');
 
-    BotbagMeshes.forEach((mesh) => {
+    webingtopMeshes.forEach((mesh) => {
       if (!mesh.userData.cloned) {
         mesh.material = mesh.material.clone();
         mesh.userData.cloned = true;
